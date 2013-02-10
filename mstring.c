@@ -11,7 +11,7 @@
 	it embeds calculated values which will reveal most forms of
 	accidental or malicious corruption before performing any write
 	operations. It lives by the motto "death before corruption" so
-	expect it to flip out and call exit(). Set atexit() if you care.
+	expect it to flip out and call abort().
 	
 	Guarantees null termination, but may be used with null-embedded
 	data. (It mallocs slightly more than you ask for. It also stores
@@ -148,7 +148,7 @@ void mstringDebug(mstring* str) {
 void mstringFatal(mstring* str, char* message) {
 	fprintf(stderr, "FATAL: %s\n", message);
 	mstringDebug(str);
-	exit(-1); }
+	abort(); }
 
 
 

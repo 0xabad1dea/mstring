@@ -120,8 +120,7 @@ void mstringAppend(mstring* str, void* src, size_t len, size_t pos) {
 	if((len > str->len) || (pos > str->len) || ((len+pos) > str->len))
 		mstringFatal(str, "excessive length passed in mstringAppend()");
 	memcpy((str->buf)+pos,src,len);
-	str->buf[pos+len] = 0;
-}
+	str->buf[pos+len] = 0; }
 
 
 

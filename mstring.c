@@ -117,7 +117,8 @@ void mstringSet(mstring* str, void* src, size_t len) {
 /* append moar data to partially filled buffer - pos is zero based */
 void mstringAppend(mstring* str, void* src, size_t len, size_t pos) {
 	if(!mstringValid(str)) mstringFatal(str, "invalid source in mstringAppend()");
-	if((len > str->len) || (pos > str->len) || ((len+pos) > str->len))
+	if((len > str->len) || (pos > str->len) || ((len+pos) > str->len)
+	|| (len+pos) < len  || (len+pos) < pos)
 		mstringFatal(str, "excessive length passed in mstringAppend()");
 	memcpy((str->buf)+pos,src,len);
 	str->buf[pos+len] = 0; }

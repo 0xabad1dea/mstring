@@ -53,4 +53,6 @@ int main() {
 	//mstringAppend(&M, "ijklmnop", 8, strlen(M.buf)); // fatal
 	// expected output: abcdefgh
 	printf("Contents of M: %s\n", M.buf);
+	
+	mstringDebug(&M);
 	}

@@ -39,7 +39,7 @@ int mstringValid(mstring* str) {
 	if(str == NULL || str->buf == NULL) return 0;
 	
 	int* bufterminator;
-	bufterminator = (int*)str->buf + str->len + 2;
+	bufterminator = (int*)(((long)str->buf + str->len + 1 + 3)&~3);
 	
 	// the last clause can segfault if buf points to lala land,
 	// but short circuit evaluation will usually prevent this.
@@ -56,7 +56,9 @@ int mstringValid(mstring* str) {
 /* initialize or re-initialize an mstring structure with a blank buffer. */
 void mstringNew(mstring* str, size_t len) {
 	
-	if((len + 2 + sizeof(int))  < len) mstringFatal(NULL, "length wraparound in mstringNew()");
+	// this should be alignment safe now. Stop telling me about your weird arch.
+	if((len + 2 + (sizeof(int)<<1))  < len) 
+		mstringFatal(NULL, "length wraparound in mstringNew()");
 	
 	// reused valid mstring - clean it up for you
 	if(mstringValid(str)) {
@@ -64,7 +66,7 @@ void mstringNew(mstring* str, size_t len) {
 		free(str->buf); }
 	
 	str->len = len;
-	str->buf = malloc(len+2+sizeof(int)); 
+	str->buf = malloc(len+2+(sizeof(int)<<1)); 
 	if(!str->buf) mstringFatal(str, "malloc failed in mstringNew()");
 	// you should be able to comment this out if it offends you,
 	// but I like guaranteeing a known state
@@ -74,7 +76,7 @@ void mstringNew(mstring* str, size_t len) {
 	str->canarylen = (long)0xbad1dea5 ^ (long)str->len;
 	
 	int* bufterminator;
-	bufterminator = (int*)str->buf + len + 2;
+	bufterminator = (int*)(((long)str->buf + len + 1 + 3)&~3);
 	*bufterminator = 0xabad1dea;
 	
 	return; }
@@ -129,7 +131,7 @@ void mstringAppend(mstring* str, void* src, size_t len, size_t pos) {
 void mstringDebug(mstring* str) {
 	if(!str) { fprintf(stderr, "--------\nNULL!!!!\n--------\n"); return; }
 	int* bufterminator;
-	bufterminator = (int*) str->buf + str->len + 2;
+	bufterminator = (int*)(((long)str->buf + str->len + 1 + 3)&~3);
 	fprintf(stderr, "--------\n");
 	fprintf(stderr, "address: %p\n", &str);
 	fprintf(stderr, "canarybuf: %ld / 0x%lx\n", str->canarybuf, 

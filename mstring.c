@@ -61,6 +61,8 @@ int mstringValid(mstring* str) {
 /* initialize or re-initialize an mstring structure with a blank buffer. */
 void mstringNew(mstring* str, size_t len) {
 	
+	if(str == NULL) mstringFatal(str, "You passed a null to mstringNew you doofus");
+	
 	// this should be alignment safe now. Stop telling me about your weird arch.
 	if((len + 2 + (sizeof(int)<<1))  < len) 
 		mstringFatal(NULL, "length wraparound in mstringNew()");
@@ -68,14 +70,15 @@ void mstringNew(mstring* str, size_t len) {
 	// reused valid mstring - clean it up for you
 	if(mstringValid(str)) {
 		//mstringComplain(str, "re-initializing dirty mstring");
-		free(str->buf); }
+		mstringDelete(str); }
 	
 	str->len = len;
 	str->buf = malloc(len+2+(sizeof(int)<<1)); 
 	if(!str->buf) mstringFatal(str, "malloc failed in mstringNew()");
+	str->buf[len+1] = 0;
 	// you should be able to comment this out if it offends you,
 	// but I like guaranteeing a known state
-	memset(str->buf, 0, len+1);
+	memset(str->buf, 0, len);
 	
 	str->canarybuf = (long)0xabad1dea ^ (long)str->buf; // I'm so vain
 	str->canarylen = (long)0xbad1dea5 ^ (long)str->len;
@@ -102,6 +105,7 @@ void mstringDuplicate(mstring* src, mstring* dst) {
 	if(mstringValid(src)) {
 			mstringNew(dst, src->len);
 			memcpy(dst->buf, src->buf, src->len);
+			dst->buf[(dst->len)+1] = 0;
 			return; }
 	
 	mstringFatal(src, "bad source in mstringDuplicate()"); }

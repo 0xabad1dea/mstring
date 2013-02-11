@@ -55,4 +55,11 @@ int main() {
 	printf("Contents of M: %s\n", M.buf);
 	
 	mstringDebug(&M);
+	
+	
+	mstringDelete(&M);
+	printf("Allocating will fail...");
+	mstringNew(&M,0xFFFFFFFFFFFFFFFF-32); // fatal
+	
+	
 	}

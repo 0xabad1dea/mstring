@@ -21,7 +21,12 @@
 	mstring.buf and mstring.len directly after they are initialized.
 	
 	still needs implementing: mstringCompare, mstringCompareSecure,
-	mstringResize, lemme know if you think of anything else
+	mstringResize, mstringSprintf, etc.. 
+	
+	Ideas: replace the static buftoken with a crc. Overkill?
+	
+	@mdowd totally spent at least two minutes looking at this so
+	it is the safest code in the world.
 	
 	*** this is currently NOT LICENSED for reuse ***
 	
@@ -120,7 +125,7 @@ void mstringSet(mstring* str, void* src, size_t len) {
 void mstringAppend(mstring* str, void* src, size_t len, size_t pos) {
 	if(!mstringValid(str)) mstringFatal(str, "invalid source in mstringAppend()");
 	if((len > str->len) || (pos > str->len) || ((len+pos) > str->len)
-	|| (len+pos) < len  || (len+pos) < pos)
+	|| (len+pos) < len  || (len+pos) < pos) // o-o-o-overkilllll
 		mstringFatal(str, "excessive length passed in mstringAppend()");
 	memcpy((str->buf)+pos,src,len);
 	str->buf[pos+len] = 0; }

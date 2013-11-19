@@ -16,20 +16,28 @@ typedef struct {
 } mstring;
 
 
-int mstringValid(mstring* str);
+int		mstringValid(const mstring* str);
 
-void mstringNew(mstring* str, size_t len);
+void	mstringNew(mstring* str, size_t len);
 
-void mstringDelete(mstring* str);
+void	mstringDelete(mstring* str);
 
-void mstringDuplicate(mstring* src, mstring* dst);
+void	mstringDuplicate(mstring* src, mstring* dst);
 
-void mstringSet(mstring *str, void* src, size_t len);
+void	mstringSet(mstring *str, void* src, size_t len);
 
-void mstringAppend(mstring* str, void* src, size_t len, size_t pos);
+void	mstringAppend(mstring* str, void* src, size_t len, size_t pos);
 
-void mstringDebug(mstring* str);
+int		mstringCompare(const mstring* a, const mstring* b);
 
-void mstringFatal(mstring* str, char* message);
+size_t	mstringLength(const mstring* str);
 
-void mstringComplain(mstring* str, char* message);
+
+
+// -------- internal ----------
+
+void	mstringDebug(const mstring* str);
+
+void	mstringFatal(const mstring* str, char* message);
+
+void	mstringComplain(mstring* str, char* message);

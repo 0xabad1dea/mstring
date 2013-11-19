@@ -58,8 +58,22 @@ int main() {
 	
 	
 	mstringDelete(&M);
-	printf("Allocating will fail...");
-	mstringNew(&M,0xFFFFFFFFFFFFFFFF-32); // fatal
+	//printf("Allocating will fail...");
+	//mstringNew(&M,0xFFFFFFFFFFFFFFFF-32); // fatal
+	
+	
+	mstringNew(&M, 16);
+	mstringNew(&Z, 16);
+	mstringSet(&M, "abcdefg", 7);
+	mstringSet(&Z, "hijklmn", 7);
+	
+	if(mstringCompare(&M, &Z) < 0) printf("~~ mstringCompare 1 of 3: working\n");
+	mstringSet(&M, "opwrstu", 7);
+	if(mstringCompare(&M, &Z) > 0) printf("~~ mstringCompare 2 of 3: working\n");
+	mstringSet(&M, "hijklmn", 7);
+	if(mstringCompare(&M, &Z) == 0) printf("~~ mstringCompare 3 of 3: working\n");
+	
+	if(mstringLength(&M) == M.len) printf("~~ mstringLength: working\n");
 	
 	
 	}

@@ -1,22 +1,26 @@
 /*
 	mstring : melissa's string
 	by melissa / 0xabad1dea
-	initial commit:	feb 2013
-	last updated:	nov 2013
+	initial commit:		feb 2013
+	last updated:		nov 2013
 	
 	A relentlessly paranoid string buffer API for the pure joy of
-	implementing one. It stores canary values xor'd against the
-	buffer's pointer and its length to detect corruption without
-	relying on compiler protections. If you think that you have no
-	use for such a thing, well, you're probably right; this is
-	mostly practice for me *writing* C rather than just criticizing
-	other people's C all day.
+	implementing one. It's basically just stack canaries except
+	built into your malloced strings regardless of compiler. If you 
+	think that you have no use for such a thing, well, you're probably 
+	right; this is mostly practice for me *writing* C rather than just 
+	criticizing other people's C all day.
 	
 	You may use read-only standard functions such as strlen() on
-	mstring.buf and mstring.len directly after they are initialized.
-	
-	still needs implementing: mstringCompare, mstringCompareSecure,
-	mstringResize, mstringSprintf, etc.. 
+	mstring.buf and mstring.len directly after they are initialized, but
+	my goal is to wrap all of the good ones :)
+
+	--TODO--
+	mstringCompareSecure (constant time)
+	mstringResize
+	mstringSprintf
+	mstringMemCompare and mstringMemCompareSecure
+	more as I find a need...
 		
 	@mdowd totally spent at least two minutes looking at this so
 	it is the safest code in the world.
@@ -41,7 +45,7 @@ ulong lengthkey = 0xbad1dea5;
 
 
 /* determines if an alleged mstring is internally consistent. */
-int mstringValid(mstring* str) {
+int mstringValid(const mstring* str) {
 	if(str == NULL || str->buf == NULL) return 0;
 	
 	uint* bufterminator;
@@ -77,9 +81,8 @@ void mstringNew(mstring* str, size_t len) {
 	str->buf = malloc(len+2+(sizeof(uint)<<1)); 
 	if(!str->buf) mstringFatal(str, "malloc failed in mstringNew()");
 	str->buf[len+1] = 0;
-	// you should be able to comment this out if it offends you,
-	// but I like guaranteeing a known state
-	memset(str->buf, 0, len);
+	// I'm of two minds whether to burn time setting a known state.
+	//memset(str->buf, 0, len);
 	
 	str->canarybuf = bufferkey ^ (ulong)str->buf;
 	str->canarylen = lengthkey ^ (ulong)str->len;
@@ -128,7 +131,7 @@ void mstringSet(mstring* str, void* src, size_t len) {
 
 
 
-/* append moar data to partially filled buffer - pos is zero based */
+/* append more data to partially filled buffer - pos is zero based */
 void mstringAppend(mstring* str, void* src, size_t len, size_t pos) {
 	if(!mstringValid(str)) mstringFatal(str, "invalid source in mstringAppend()");
 	if((len > str->len) || (pos > str->len) || ((len+pos) > str->len)
@@ -138,9 +141,33 @@ void mstringAppend(mstring* str, void* src, size_t len, size_t pos) {
 	str->buf[pos+len] = 0; }
 
 
+/* compare two mstrings - strcmp wrapper */
+int mstringCompare(const mstring* a, const mstring* b) {
+	if(!mstringValid(a)) 
+		mstringFatal(a, "invalid 'a' to mstringCompare()");
+	if(!mstringValid(b)) 
+			mstringFatal(b, "invalid 'b' to mstringCompare()");
+	
+	return strcmp(a->buf, b->buf); }
+
+
+
+/* trivial wrapper of the length property, if you prefer */
+size_t mstringLength(const mstring* str) {
+	if(!mstringValid(str)) 
+		mstringFatal(str, "invalid mstring in mstringLength()");
+	return str->len;
+	
+}
+
+
+
+
+//------------------------------- snip ---------------------------------------
+
 
 /* prettyprint the structure */
-void mstringDebug(mstring* str) {
+void mstringDebug(const mstring* str) {
 	if(!str) { fprintf(stderr, "--------\nNULL!!!!\n--------\n"); return; }
 	uint* bufterminator;
 	bufterminator = (uint*)(((ulong)str->buf + str->len + 1 + 3)&~3);
@@ -159,7 +186,7 @@ void mstringDebug(mstring* str) {
 
 
 /* an honorable death in the face of memory corruption! */
-void mstringFatal(mstring* str, char* message) {
+void mstringFatal(const mstring* str, char* message) {
 	fprintf(stderr, "FATAL: %s\n", message);
 	mstringDebug(str);
 	abort(); }

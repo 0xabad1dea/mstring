@@ -58,7 +58,7 @@ int mstringValid(const mstring* str) {
 	// there isn't really anything I can do about this.
 	if((str->canarybuf ^ (ulong)str->buf) == bufferkey
 	&& (str->canarylen ^ (ulong)str->len) == lengthkey
-	&& (*bufterminator == bufferkey ^ (ulong)str)) return 1;
+	&& (*bufterminator == (bufferkey ^ (ulong)str))) return 1;
 	
 	return 0; }
 
@@ -173,6 +173,8 @@ int mstringPrintf(mstring* str, const char* format, ...) {
 	
 	va_start(args,format);
 	result = vsnprintf(str->buf, str->len, format, args);
+	// !@#$ MICROSOFT with its !@#$ DIFFERENT SPEC
+	str->buf[(str->len)-1] = 0;
 	va_end(args);
 	return result; }
 

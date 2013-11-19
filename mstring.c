@@ -1,34 +1,26 @@
 /*
-	mstring : melissa string
+	mstring : melissa's string
+	by melissa / 0xabad1dea
+	initial commit:	feb 2013
+	last updated:	nov 2013
 	
-	by melissa / 0xabad1dea feb 2013
-	
-	something I thought of and threw together while snowed in
-	on a Saturday night, so take with a grain of salt
-	
-	a relentlessly paranoid string/buffer api that is convinced
-	you are going to screw something up. Inspired by stack canaries,
-	it embeds calculated values which will reveal most forms of
-	accidental or malicious corruption before performing any write
-	operations. It lives by the motto "death before corruption" so
-	expect it to flip out and call abort().
-	
-	Guarantees null termination, but may be used with null-embedded
-	data. (It mallocs slightly more than you ask for. It also stores
-	a magic number past the end of your buffer.)
+	A relentlessly paranoid string buffer API for the pure joy of
+	implementing one. It stores canary values xor'd against the
+	buffer's pointer and its length to detect corruption without
+	relying on compiler protections. If you think that you have no
+	use for such a thing, well, you're probably right; this is
+	mostly practice for me *writing* C rather than just criticizing
+	other people's C all day.
 	
 	You may use read-only standard functions such as strlen() on
 	mstring.buf and mstring.len directly after they are initialized.
 	
 	still needs implementing: mstringCompare, mstringCompareSecure,
 	mstringResize, mstringSprintf, etc.. 
-	
-	Ideas: replace the static buftoken with a crc. Overkill?
-	
+		
 	@mdowd totally spent at least two minutes looking at this so
 	it is the safest code in the world.
-	
-	*** this is currently NOT LICENSED for reuse ***
+
 	
 */
 
@@ -37,22 +29,31 @@
 #include <string.h>
 #include "mstring.h"
 
+#define ulong unsigned long
+#define uint unsigned int
+
+
+// TODO: make these random to better resist malicious attack 
+// (it's okay-ish as is because the pointers are factored in)
+// yes, these numbers are specifically chosen out of vanity
+ulong bufferkey = 0xabad1dea;
+ulong lengthkey = 0xbad1dea5;
 
 
 /* determines if an alleged mstring is internally consistent. */
 int mstringValid(mstring* str) {
 	if(str == NULL || str->buf == NULL) return 0;
 	
-	int* bufterminator;
-	bufterminator = (int*)(((long)str->buf + str->len + 1 + 3)&~3);
+	uint* bufterminator;
+	// my court wizards tell me this will maintain correct alignment
+	bufterminator = (uint*)(((ulong)str->buf + str->len + 1 + 3)&~3);
 	
 	// the last clause can segfault if buf points to lala land,
 	// but short circuit evaluation will usually prevent this.
-	// I consider segfaulting to be a reasonable reaction however,
-	// as it's a good indication something is *very* wrong.
-	if(((long)str->canarybuf ^ (long)str->buf) == (long)0xabad1dea
-	&& ((long)str->canarylen ^ (long)str->len) == (long)0xbad1dea5
-	&& (*bufterminator == 0xabad1dea)) return 1;
+	// there isn't really anything I can do about this.
+	if((str->canarybuf ^ (ulong)str->buf) == bufferkey
+	&& (str->canarylen ^ (ulong)str->len) == lengthkey
+	&& (*bufterminator == bufferkey)) return 1;
 	
 	return 0; }
 
@@ -61,10 +62,10 @@ int mstringValid(mstring* str) {
 /* initialize or re-initialize an mstring structure with a blank buffer. */
 void mstringNew(mstring* str, size_t len) {
 	
-	if(str == NULL) mstringFatal(str, "You passed a null to mstringNew you doofus");
+	if(str == NULL) mstringFatal(str, "null pointer passed to mstringNew()");
 	
-	// this should be alignment safe now. Stop telling me about your weird arch.
-	if((len + 2 + (sizeof(int)<<1))  < len) 
+	// this should be alignment safe now.
+	if((len + 2 + (sizeof(uint)<<1))  < len) 
 		mstringFatal(NULL, "length wraparound in mstringNew()");
 	
 	// reused valid mstring - clean it up for you
@@ -73,19 +74,19 @@ void mstringNew(mstring* str, size_t len) {
 		mstringDelete(str); }
 	
 	str->len = len;
-	str->buf = malloc(len+2+(sizeof(int)<<1)); 
+	str->buf = malloc(len+2+(sizeof(uint)<<1)); 
 	if(!str->buf) mstringFatal(str, "malloc failed in mstringNew()");
 	str->buf[len+1] = 0;
 	// you should be able to comment this out if it offends you,
 	// but I like guaranteeing a known state
 	memset(str->buf, 0, len);
 	
-	str->canarybuf = (long)0xabad1dea ^ (long)str->buf; // I'm so vain
-	str->canarylen = (long)0xbad1dea5 ^ (long)str->len;
+	str->canarybuf = bufferkey ^ (ulong)str->buf;
+	str->canarylen = lengthkey ^ (ulong)str->len;
 	
 	int* bufterminator;
-	bufterminator = (int*)(((long)str->buf + len + 1 + 3)&~3);
-	*bufterminator = 0xabad1dea;
+	bufterminator = (uint*)(((ulong)str->buf + len + 1 + 3)&~3);
+	*bufterminator = bufferkey;
 	
 	return; }
 
@@ -112,13 +113,15 @@ void mstringDuplicate(mstring* src, mstring* dst) {
 	
 	
 
-/* copy arbitrary bytes to buffer - guaranteed null terminated */
+/* copy arbitrary bytes to buffer */
 void mstringSet(mstring* str, void* src, size_t len) {
-	if(len > str->len) mstringFatal(str, "mstringSet() excessive length");
+	if(len > str->len) mstringFatal(str, "excessive length in mstringSet()");
 	
 	if(mstringValid(str)) {
 		memcpy(str->buf, src, len);
-		// sssh it's okay, we allocated for this
+		// I prefer there to always be a null after the buffer so we *can*
+		// read it out as a c string - this will NOT protect you from off
+		// by one errors of your own making.
 		str->buf[len] = 0; } 
 	
 	else mstringFatal(str, "invalid mstring in mstringSet()"); }
@@ -130,7 +133,7 @@ void mstringAppend(mstring* str, void* src, size_t len, size_t pos) {
 	if(!mstringValid(str)) mstringFatal(str, "invalid source in mstringAppend()");
 	if((len > str->len) || (pos > str->len) || ((len+pos) > str->len)
 	|| (len+pos) < len  || (len+pos) < pos) // o-o-o-overkilllll
-		mstringFatal(str, "excessive length passed in mstringAppend()");
+		mstringFatal(str, "excessive length in mstringAppend()");
 	memcpy((str->buf)+pos,src,len);
 	str->buf[pos+len] = 0; }
 
@@ -139,18 +142,18 @@ void mstringAppend(mstring* str, void* src, size_t len, size_t pos) {
 /* prettyprint the structure */
 void mstringDebug(mstring* str) {
 	if(!str) { fprintf(stderr, "--------\nNULL!!!!\n--------\n"); return; }
-	int* bufterminator;
-	bufterminator = (int*)(((long)str->buf + str->len + 1 + 3)&~3);
+	uint* bufterminator;
+	bufterminator = (uint*)(((ulong)str->buf + str->len + 1 + 3)&~3);
 	fprintf(stderr, "--------\n");
 	fprintf(stderr, "address: %p\n", &str);
 	fprintf(stderr, "canarybuf: %ld / 0x%lx\n", str->canarybuf, 
-	(long)str->canarybuf ^ (long)str->buf);
+	(ulong)str->canarybuf ^ (ulong)str->buf);
 	fprintf(stderr, "buf: %p\n", str->buf);
-	fprintf(stderr, "len: %u\n",(unsigned int)str->len);
+	fprintf(stderr, "len: %u\n",(uint)str->len);
 	fprintf(stderr, "canarylen: %ld / 0x%lx\n", str->canarylen, 
-	(long)str->canarylen ^ (long)str->len);
+	(ulong)str->canarylen ^ (ulong)str->len);
 	if(mstringValid(str)) fprintf(stderr, "bufterminator: 0x%x\n", *bufterminator);
-	else fprintf(stderr, "bufterminator: not printed to avoid bad deref\n");
+	else fprintf(stderr, "bufterminator: not printed: bad deref\n");
 	fprintf(stderr,  "--------\n"); }
 
 

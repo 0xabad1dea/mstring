@@ -8,10 +8,10 @@
 
 
 typedef struct {
-	long canarybuf;
+	unsigned long canarybuf;
 	size_t len;
 	char* buf;
-	long canarylen;
+	unsigned long canarylen;
 	
 } mstring;
 

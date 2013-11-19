@@ -117,10 +117,8 @@ void mstringDuplicate(mstring* src, mstring* dst) {
 
 /* copy arbitrary bytes to buffer - len 0 to take strlen of src */
 void mstringSet(mstring* str, void* src, size_t len) {
-	if(len == 0) { 
-		len = strlen((char*)src);
-		if(len < LONG_MAX) len += 1; // **aggressively** secure
-		else mstringFatal(str, "No way, strlen actually returned MAXINT"); }
+	if(len == 0) // I considered checking for wraparound here, 
+		len = strlen((char*)src) +1; // but it's actually pretty pointless :)
 	if(len > str->len) mstringFatal(str, "excessive length in mstringSet()");
 	
 	

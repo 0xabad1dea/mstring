@@ -48,9 +48,9 @@ ulong lengthkey = 0xbad1dea5;
 int mstringValid(const mstring* str) {
 	if(str == NULL || str->buf == NULL) return 0;
 	
-	uint* bufterminator;
+	ulong* bufterminator;
 	// my court wizards tell me this will maintain correct alignment
-	bufterminator = (uint*)(((ulong)str->buf + str->len + 1 + 3)&~3);
+	bufterminator = (ulong*)(((ulong)str->buf + str->len + 1 + 3)&~3);
 	
 	// the last clause can segfault if buf points to lala land,
 	// but short circuit evaluation will usually prevent this.
@@ -87,8 +87,8 @@ void mstringNew(mstring* str, size_t len) {
 	str->canarybuf = bufferkey ^ (ulong)str->buf;
 	str->canarylen = lengthkey ^ (ulong)str->len;
 	
-	int* bufterminator;
-	bufterminator = (uint*)(((ulong)str->buf + len + 1 + 3)&~3);
+	ulong* bufterminator;
+	bufterminator = (ulong*)(((ulong)str->buf + len + 1 + 3)&~3);
 	*bufterminator = bufferkey ^ (ulong)str;
 	
 	return; }
@@ -167,18 +167,19 @@ size_t mstringLength(const mstring* str) {
 /* prettyprint the structure */
 void mstringDebug(const mstring* str) {
 	if(!str) { fprintf(stderr, "--------\nNULL!!!!\n--------\n"); return; }
-	uint* bufterminator;
-	bufterminator = (uint*)(((ulong)str->buf + str->len + 1 + 3)&~3);
+	ulong* bufterminator;
+	bufterminator = (ulong*)(((ulong)str->buf + str->len + 1 + 3)&~3);
 	fprintf(stderr, "--------\n");
-	fprintf(stderr, "address: %p\n", &str);
-	fprintf(stderr, "canarybuf: %ld / 0x%lx\n", str->canarybuf, 
+	fprintf(stderr, "address:\t%p\n", &str);
+	fprintf(stderr, "canarybuf:\t0x%lx / 0x%lx\n", str->canarybuf, 
 	(ulong)str->canarybuf ^ (ulong)str->buf);
-	fprintf(stderr, "buf: %p\n", str->buf);
-	fprintf(stderr, "len: %u\n",(uint)str->len);
-	fprintf(stderr, "canarylen: %ld / 0x%lx\n", str->canarylen, 
+	fprintf(stderr, "buf:\t\t%p\n", str->buf);
+	fprintf(stderr, "len:\t\t%u\n",(uint)str->len);
+	fprintf(stderr, "canarylen:\t0x%lx / 0x%lx\n", str->canarylen, 
 	(ulong)str->canarylen ^ (ulong)str->len);
-	if(mstringValid(str)) fprintf(stderr, "bufterminator: 0x%x\n", *bufterminator);
+	if(mstringValid(str)) fprintf(stderr, "bufterminator:\t\t0x%lx\n", (ulong)*bufterminator);
 	else fprintf(stderr, "bufterminator: not printed: bad deref\n");
+	fprintf(stderr, "expected bufterminator:\t0x%lx\n", (ulong)(bufferkey ^ (ulong)str));
 	fprintf(stderr,  "--------\n"); }
 
 

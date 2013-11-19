@@ -76,4 +76,18 @@ int main() {
 	if(mstringLength(&M) == M.len) printf("~~ mstringLength: working\n");
 	
 	
+	mstringNew(&M, 32);
+	
+	mstringPrintf(&M, "%s %x", "Here we come a wassailing", 0xbadc0d35);
+	printf("Printf test: %s\n", M.buf);
+	mstringPrintf(&M, "%s", "short string");
+	printf("Printf test: %s\n", M.buf);
+	mstringPrintf(&M, "%s", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+	printf("Printf test: %s\n", M.buf);
+	
+	mstringClear(&M);
+	if(M.buf[0] == 0 && M.buf[31] == 0) printf("~~ mstringClear: probably working\n");
+	
+	
+	
 	}

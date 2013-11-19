@@ -1,8 +1,8 @@
 /*
 	mstring : melissa's string
 	by melissa / 0xabad1dea
-	initial commit:		feb 2013
-	last updated:		nov 2013
+	initial commit:	feb 2013
+	last updated:	nov 2013
 	
 	A relentlessly paranoid string buffer API for the pure joy of
 	implementing one. It's basically just stack canaries except
@@ -18,7 +18,6 @@
 	--TODO--
 	mstringCompareSecure (constant time)
 	mstringResize
-	mstringSprintf
 	mstringMemCompare and mstringMemCompareSecure
 	more as I find a need...
 		
@@ -31,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "mstring.h"
 
 #define ulong unsigned long
@@ -158,6 +158,30 @@ size_t mstringLength(const mstring* str) {
 		mstringFatal(str, "invalid mstring in mstringLength()");
 	return str->len; }
 
+
+
+/* snprintf into buffer: will not overflow: null terminates within bounds */
+int mstringPrintf(mstring* str, const char* format, ...) {
+	va_list args;
+	int result;
+	if(!mstringValid(str)) 
+		mstringFatal(str, "invalid mstring in mstringPrintf()");
+	if(!format)
+		mstringFatal(str, "null format in mstringPrintf()");
+	
+	va_start(args,format);
+	result = vsnprintf(str->buf, str->len, format, args);
+	va_end(args);
+	return result; }
+
+
+
+/* erase the contents of an mstring */
+void mstringClear(mstring* str) {
+	if(!mstringValid(str))
+		mstringFatal(str, "invalid mstring in mstringClear()");
+	memset(str->buf, 0, str->len);
+}
 
 
 

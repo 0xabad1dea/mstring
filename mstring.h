@@ -32,6 +32,10 @@ int		mstringCompare(const mstring* a, const mstring* b);
 
 size_t	mstringLength(const mstring* str);
 
+int		mstringPrintf(mstring* str, const char* format, ...);
+
+void	mstringClear(mstring* str);
+
 
 
 // -------- internal ----------

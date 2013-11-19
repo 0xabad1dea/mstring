@@ -116,9 +116,11 @@ void mstringDuplicate(mstring* src, mstring* dst) {
 	
 	
 
-/* copy arbitrary bytes to buffer */
+/* copy arbitrary bytes to buffer - len 0 to take strlen of src */
 void mstringSet(mstring* str, void* src, size_t len) {
+	if(len == 0) len = strlen((char*)src) + 1;
 	if(len > str->len) mstringFatal(str, "excessive length in mstringSet()");
+	
 	
 	if(mstringValid(str)) {
 		memcpy(str->buf, src, len);
@@ -180,8 +182,7 @@ int mstringPrintf(mstring* str, const char* format, ...) {
 void mstringClear(mstring* str) {
 	if(!mstringValid(str))
 		mstringFatal(str, "invalid mstring in mstringClear()");
-	memset(str->buf, 0, str->len);
-}
+	memset(str->buf, 0, str->len); }
 
 
 

@@ -88,6 +88,13 @@ int main() {
 	mstringClear(&M);
 	if(M.buf[0] == 0 && M.buf[31] == 0) printf("~~ mstringClear: probably working\n");
 	
+	mstringNew(&M, 16);
+	mstringSet(&M, "0123456789ABCDE", 0);
+	printf("Auto-strlen: %s\n", M.buf);
+	//mstringSet(&M, "0123456789ABCDEF", 0); // fatal
+	//printf("Auto-strlen: %s\n", M.buf);
+	
+	
 	
 	
 	}

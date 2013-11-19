@@ -36,6 +36,8 @@ int		mstringPrintf(mstring* str, const char* format, ...);
 
 void	mstringClear(mstring* str);
 
+void	mstringGrow(mstring* str, size_t newlen);
+
 
 
 // -------- internal ----------

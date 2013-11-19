@@ -48,7 +48,8 @@ int main() {
 	
 	mstringNew(&M, 12);
 	
-	mstringSet(&M, "abcd", strlen("abcd"));
+	mstringSet(&M, "abcd", 0);
+	printf("-+-+-+-+-+ %d\n", (int)strlen(M.buf));
 	mstringAppend(&M, "efghij", strlen("efgh"), strlen(M.buf));
 	//mstringAppend(&M, "ijklmnop", 8, strlen(M.buf)); // fatal
 	// expected output: abcdefgh
@@ -94,6 +95,11 @@ int main() {
 	//mstringSet(&M, "0123456789ABCDEF", 0); // fatal
 	//printf("Auto-strlen: %s\n", M.buf);
 	
+	mstringGrow(&M, 32);
+	mstringSet(&M, "0123456789ABCDEFGHIJKLMNOP", 0);
+	printf("Growing: %s - %d\n", M.buf, (int)M.len);
+	
+	//mstringGrow(&M, 8); // fatal
 	
 	
 	

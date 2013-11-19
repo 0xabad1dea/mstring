@@ -17,7 +17,7 @@
 
 	--TODO--
 	mstringCompareSecure (constant time)
-	mstringResize
+	mstringShrink
 	mstringMemCompare and mstringMemCompareSecure
 	more as I find a need...
 		
@@ -70,7 +70,7 @@ void mstringNew(mstring* str, size_t len) {
 	if(str == NULL) mstringFatal(str, "null pointer passed to mstringNew()");
 	
 	// this should be alignment safe now.
-	if((len + 2 + (sizeof(uint)<<1))  < len) 
+	if((len + 2 + (sizeof(ulong)<<1))  < len) 
 		mstringFatal(NULL, "length wraparound in mstringNew()");
 	
 	// reused valid mstring - clean it up for you
@@ -79,9 +79,11 @@ void mstringNew(mstring* str, size_t len) {
 		mstringDelete(str); }
 	
 	str->len = len;
-	str->buf = malloc(len+2+(sizeof(uint)<<1)); 
+	// (extra space for extra null terminator + buffer terminator)
+	str->buf = malloc(len+2+(sizeof(ulong)<<1)); 
 	if(!str->buf) mstringFatal(str, "malloc failed in mstringNew()");
-	str->buf[len+1] = 0;
+	str->buf[len+1] = 0; // personal preference to make sure any buf
+	// can always be read out as a c string
 	
 	str->canarybuf = bufferkey ^ (ulong)str->buf;
 	str->canarylen = lengthkey ^ (ulong)str->len;
@@ -115,19 +117,15 @@ void mstringDuplicate(mstring* src, mstring* dst) {
 	
 	
 
-/* copy arbitrary bytes to buffer - len 0 to take strlen of src */
+/* copy arbitrary bytes to buffer - len 0 to take strlen of src + null terminator */
 void mstringSet(mstring* str, void* src, size_t len) {
 	if(len == 0) // I considered checking for wraparound here, 
 		len = strlen((char*)src) +1; // but it's actually pretty pointless :)
 	if(len > str->len) mstringFatal(str, "excessive length in mstringSet()");
 	
 	
-	if(mstringValid(str)) {
-		memcpy(str->buf, src, len);
-		// I prefer there to always be a null after the buffer so we *can*
-		// read it out as a c string - this will NOT protect you from length
-		// assumption bugs of your own making when copying out to bare buffers
-		str->buf[len] = 0; } 
+	if(mstringValid(str)) {  memcpy(str->buf, src, len); 
+	str->buf[len] = 0; } // safe: may go into the reserved spot: won't truncate
 	
 	else mstringFatal(str, "invalid mstring in mstringSet()"); }
 
@@ -188,6 +186,25 @@ void mstringClear(mstring* str) {
 
 
 
+/* increase buffer size */
+void mstringGrow(mstring* str, size_t newlen){
+	char* tmp;
+	size_t tmplen;
+	if(!mstringValid(str)) mstringFatal(str, "invalid source in mstringGrow()");
+	if(newlen == str->len) return; // nothing to see here
+	if(newlen < str->len) mstringFatal(str, "trying to shrink in mstringGrow()");
+	tmplen = str->len;
+	tmp = malloc(tmplen);
+	if(!tmp) mstringFatal(str, "malloc failure in mstringGrow()");
+	memcpy(tmp,str->buf,tmplen);
+	mstringDelete(str);
+	mstringNew(str, newlen);
+	memcpy(str->buf,tmp,tmplen);
+	str->buf[tmplen+1] = 0;
+	free(tmp); }
+
+
+
 //------------------------------- snip ---------------------------------------
 
 
@@ -201,7 +218,7 @@ void mstringDebug(const mstring* str) {
 	fprintf(stderr, "canarybuf:\t0x%lx / 0x%lx\n", str->canarybuf, 
 	(ulong)str->canarybuf ^ (ulong)str->buf);
 	fprintf(stderr, "buf:\t\t%p\n", str->buf);
-	fprintf(stderr, "len:\t\t%u\n",(uint)str->len);
+	fprintf(stderr, "len:\t\t%lu\n",(ulong)str->len);
 	fprintf(stderr, "canarylen:\t0x%lx / 0x%lx\n", str->canarylen, 
 	(ulong)str->canarylen ^ (ulong)str->len);
 	if(mstringValid(str)) fprintf(stderr, "bufterminator:\t\t0x%lx\n", (ulong)*bufterminator);

@@ -146,7 +146,7 @@ int mstringCompare(const mstring* a, const mstring* b) {
 	if(!mstringValid(a)) 
 		mstringFatal(a, "invalid 'a' to mstringCompare()");
 	if(!mstringValid(b)) 
-			mstringFatal(b, "invalid 'b' to mstringCompare()");
+		mstringFatal(b, "invalid 'b' to mstringCompare()");
 	
 	return strcmp(a->buf, b->buf); }
 
@@ -200,7 +200,6 @@ void mstringGrow(mstring* str, size_t newlen){
 	mstringDelete(str);
 	mstringNew(str, newlen);
 	memcpy(str->buf,tmp,tmplen);
-	str->buf[tmplen+1] = 0;
 	free(tmp); }
 
 

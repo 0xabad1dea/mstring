@@ -156,9 +156,7 @@ int mstringCompare(const mstring* a, const mstring* b) {
 size_t mstringLength(const mstring* str) {
 	if(!mstringValid(str)) 
 		mstringFatal(str, "invalid mstring in mstringLength()");
-	return str->len;
-	
-}
+	return str->len; }
 
 
 

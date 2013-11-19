@@ -57,7 +57,7 @@ int mstringValid(const mstring* str) {
 	// there isn't really anything I can do about this.
 	if((str->canarybuf ^ (ulong)str->buf) == bufferkey
 	&& (str->canarylen ^ (ulong)str->len) == lengthkey
-	&& (*bufterminator == bufferkey)) return 1;
+	&& (*bufterminator == bufferkey ^ (ulong)str)) return 1;
 	
 	return 0; }
 
@@ -89,7 +89,7 @@ void mstringNew(mstring* str, size_t len) {
 	
 	int* bufterminator;
 	bufterminator = (uint*)(((ulong)str->buf + len + 1 + 3)&~3);
-	*bufterminator = bufferkey;
+	*bufterminator = bufferkey ^ (ulong)str;
 	
 	return; }
 

@@ -44,14 +44,15 @@
 ulong bufferkey = 0xabad1dea;
 ulong lengthkey = 0xbad1dea5;
 
-
 /* determines if an alleged mstring is internally consistent. */
 int mstringValid(const mstring* str) {
 	if(str == NULL || str->buf == NULL) return 0;
 	
 	ulong* bufterminator;
 	// my court wizards tell me this will maintain correct alignment
-	bufterminator = (ulong*)(((ulong)str->buf + str->len + 1 + 3)&~3);
+	// this formula has caused me a lot of grief - should be completely
+	// 32/64 bit safe now, I think?!
+	bufterminator = (ulong*)(((ulong)str->buf + str->len + 1 + 8)&~7);
 	
 	// the last clause can segfault if buf points to lala land,
 	// but short circuit evaluation will usually prevent this.
@@ -89,7 +90,7 @@ void mstringNew(mstring* str, size_t len) {
 	str->canarylen = lengthkey ^ (ulong)str->len;
 	
 	ulong* bufterminator;
-	bufterminator = (ulong*)(((ulong)str->buf + len + 1 + 3)&~3);
+	bufterminator = (ulong*)(((ulong)str->buf + len + 1 + 8)&~7);
 	*bufterminator = bufferkey ^ (ulong)str;
 	
 	return; }
@@ -211,7 +212,7 @@ void mstringGrow(mstring* str, size_t newlen){
 void mstringDebug(const mstring* str) {
 	if(!str) { fprintf(stderr, "--------\nNULL!!!!\n--------\n"); return; }
 	ulong* bufterminator;
-	bufterminator = (ulong*)(((ulong)str->buf + str->len + 1 + 3)&~3);
+	bufterminator = (ulong*)(((ulong)str->buf + str->len + 1 + 8)&~7);
 	fprintf(stderr, "--------\n");
 	fprintf(stderr, "address:\t%p\n", &str);
 	fprintf(stderr, "canarybuf:\t0x%lx / 0x%lx\n", str->canarybuf, 

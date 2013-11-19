@@ -22,7 +22,7 @@
 	more as I find a need...
 		
 	@mdowd totally spent at least two minutes looking at this so
-	it is the safest code in the world.
+	it is the safest code in the world. Or maybe not. ~peril~ 
 
 	
 */
@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <limits.h>
 #include "mstring.h"
 
 #define ulong unsigned long
@@ -63,7 +64,7 @@ int mstringValid(const mstring* str) {
 
 
 
-/* initialize or re-initialize an mstring structure with a blank buffer. */
+/* initialize or re-initialize an mstring structure  */
 void mstringNew(mstring* str, size_t len) {
 	
 	if(str == NULL) mstringFatal(str, "null pointer passed to mstringNew()");
@@ -81,8 +82,6 @@ void mstringNew(mstring* str, size_t len) {
 	str->buf = malloc(len+2+(sizeof(uint)<<1)); 
 	if(!str->buf) mstringFatal(str, "malloc failed in mstringNew()");
 	str->buf[len+1] = 0;
-	// I'm of two minds whether to burn time setting a known state.
-	//memset(str->buf, 0, len);
 	
 	str->canarybuf = bufferkey ^ (ulong)str->buf;
 	str->canarylen = lengthkey ^ (ulong)str->len;
@@ -118,15 +117,18 @@ void mstringDuplicate(mstring* src, mstring* dst) {
 
 /* copy arbitrary bytes to buffer - len 0 to take strlen of src */
 void mstringSet(mstring* str, void* src, size_t len) {
-	if(len == 0) len = strlen((char*)src) + 1;
+	if(len == 0) { 
+		len = strlen((char*)src);
+		if(len < LONG_MAX) len += 1; // **aggressively** secure
+		else mstringFatal(str, "No way, strlen actually returned MAXINT"); }
 	if(len > str->len) mstringFatal(str, "excessive length in mstringSet()");
 	
 	
 	if(mstringValid(str)) {
 		memcpy(str->buf, src, len);
 		// I prefer there to always be a null after the buffer so we *can*
-		// read it out as a c string - this will NOT protect you from off
-		// by one errors of your own making.
+		// read it out as a c string - this will NOT protect you from length
+		// assumption bugs of your own making when copying out to bare buffers
 		str->buf[len] = 0; } 
 	
 	else mstringFatal(str, "invalid mstring in mstringSet()"); }

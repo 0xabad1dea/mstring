@@ -44,6 +44,8 @@ void	mstringGrow(mstring* str, size_t newlen);
 
 void	mstringDebug(const mstring* str);
 
+void	mstringHexdump(const mstring* str);
+
 void	mstringFatal(const mstring* str, char* message);
 
 void	mstringComplain(mstring* str, char* message);

@@ -102,7 +102,11 @@ int main() {
 	//mstringGrow(&M, 8); // fatal
 	
 	
+	
 	printf("Sizeof ulong: %ld\n", sizeof(unsigned long));
+	
+	mstringDebug(&M);
+	mstringHexdump(&M);
 	
 	
 	

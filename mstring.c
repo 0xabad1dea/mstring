@@ -81,9 +81,9 @@ void mstringNew(mstring* str, size_t len) {
 	
 	str->len = len;
 	// (extra space for extra null terminator + buffer terminator)
-	str->buf = malloc(len+2+(sizeof(ulong)<<1)); 
+	str->buf = malloc(len+2+(8<<1)); // I know, I have bare literals!
 	if(!str->buf) mstringFatal(str, "malloc failed in mstringNew()");
-	str->buf[len+1] = 0; // personal preference to make sure any buf
+	str->buf[len] = 0; // personal preference to make sure any buf
 	// can always be read out as a c string
 	
 	str->canarybuf = bufferkey ^ (ulong)str->buf;
@@ -225,6 +225,17 @@ void mstringDebug(const mstring* str) {
 	else fprintf(stderr, "bufterminator: not printed: bad deref\n");
 	fprintf(stderr, "expected bufterminator:\t0x%lx\n", (ulong)(bufferkey ^ (ulong)str));
 	fprintf(stderr,  "--------\n"); }
+	
+	
+/* hex prints the buffer including terminator etc. */
+void mstringHexdump(const mstring* str) {
+	int total = str->len+2+(8<<1);
+	int i;
+	for(i = 0; i < total; i++) {
+		// forget to specify two significant digits for a good time
+		printf("%.2hhx ", str->buf[i]); 
+		if(i == (str->len) - 1) printf("==== "); }
+	printf("\n"); }
 
 
 

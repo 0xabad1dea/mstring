@@ -232,7 +232,7 @@ void mstringHexdump(const mstring* str) {
 	uint i;
 	for(i = 0; i < total; i++) {
 		// forget to specify two significant digits for a good time
-		printf("%.2hhx ", str->buf[i]); 
+		printf("%.2hhx ", (unsigned char)str->buf[i]); 
 		if(i == (str->len) - 1) printf("==== "); }
 	printf("\n"); }
 

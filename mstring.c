@@ -48,18 +48,18 @@ ulong lengthkey = 0xbad1dea5;
 int mstringValid(const mstring* str) {
 	if(str == NULL || str->buf == NULL) return 0;
 	
-	ulong* bufterminator;
+	uintptr_t* bufterminator;
 	// my court wizards tell me this will maintain correct alignment
 	// this formula has caused me a lot of grief - should be completely
 	// 32/64 bit safe now, I think?!
-	bufterminator = (ulong*)(((ulong)str->buf + str->len + 1 + 8)&~7);
+	bufterminator = (uintptr_t*)(((uintptr_t)str->buf + str->len + 1 + 8)&~7);
 	
 	// the last clause can segfault if buf points to lala land,
 	// but short circuit evaluation will usually prevent this.
 	// there isn't really anything I can do about this.
 	if((str->canarybuf ^ (ulong)str->buf) == bufferkey
 	&& (str->canarylen ^ (ulong)str->len) == lengthkey
-	&& (*bufterminator == (bufferkey ^ (ulong)str))) return 1;
+	&& (*bufterminator == ((uintptr_t)bufferkey ^ (uintptr_t)str))) return 1;
 	
 	return 0; }
 
@@ -71,7 +71,7 @@ void mstringNew(mstring* str, size_t len) {
 	if(str == NULL) mstringFatal(str, "null pointer passed to mstringNew()");
 	
 	// this should be alignment safe now.
-	if((len + 2 + (sizeof(ulong)<<1))  < len) 
+	if((len + 2 + (8<<1))  < len) 
 		mstringFatal(NULL, "length wraparound in mstringNew()");
 	
 	// reused valid mstring - clean it up for you
@@ -89,9 +89,9 @@ void mstringNew(mstring* str, size_t len) {
 	str->canarybuf = bufferkey ^ (ulong)str->buf;
 	str->canarylen = lengthkey ^ (ulong)str->len;
 	
-	ulong* bufterminator;
-	bufterminator = (ulong*)(((ulong)str->buf + len + 1 + 8)&~7);
-	*bufterminator = bufferkey ^ (ulong)str;
+	uintptr_t* bufterminator;
+	bufterminator = (uintptr_t*)(((uintptr_t)str->buf + len + 1 + 8)&~7);
+	*bufterminator = bufferkey ^ (uintptr_t)str;
 	
 	return; }
 
@@ -111,7 +111,6 @@ void mstringDuplicate(mstring* src, mstring* dst) {
 	if(mstringValid(src)) {
 			mstringNew(dst, src->len);
 			memcpy(dst->buf, src->buf, src->len);
-			dst->buf[(dst->len)+1] = 0;
 			return; }
 	
 	mstringFatal(src, "bad source in mstringDuplicate()"); }
@@ -121,7 +120,7 @@ void mstringDuplicate(mstring* src, mstring* dst) {
 /* copy arbitrary bytes to buffer - len 0 to take strlen of src + null terminator */
 void mstringSet(mstring* str, void* src, size_t len) {
 	if(len == 0) // I considered checking for wraparound here, 
-		len = strlen((char*)src) +1; // but it's actually pretty pointless :)
+		len = strlen((char*)src) + 1; // but it's actually pretty pointless :)
 	if(len > str->len) mstringFatal(str, "excessive length in mstringSet()");
 	
 	
@@ -211,8 +210,8 @@ void mstringGrow(mstring* str, size_t newlen){
 /* prettyprint the structure */
 void mstringDebug(const mstring* str) {
 	if(!str) { fprintf(stderr, "--------\nNULL!!!!\n--------\n"); return; }
-	ulong* bufterminator;
-	bufterminator = (ulong*)(((ulong)str->buf + str->len + 1 + 8)&~7);
+	uintptr_t* bufterminator;
+	bufterminator = (uintptr_t*)(((uintptr_t)str->buf + str->len + 1 + 8)&~7);
 	fprintf(stderr, "--------\n");
 	fprintf(stderr, "address:\t%p\n", &str);
 	fprintf(stderr, "canarybuf:\t0x%lx / 0x%lx\n", str->canarybuf, 
@@ -221,9 +220,9 @@ void mstringDebug(const mstring* str) {
 	fprintf(stderr, "len:\t\t%lu\n",(ulong)str->len);
 	fprintf(stderr, "canarylen:\t0x%lx / 0x%lx\n", str->canarylen, 
 	(ulong)str->canarylen ^ (ulong)str->len);
-	if(mstringValid(str)) fprintf(stderr, "bufterminator:\t\t0x%lx\n", (ulong)*bufterminator);
+	if(mstringValid(str)) fprintf(stderr, "bufterminator:\t\t0x%lx\n", (uintptr_t)*bufterminator);
 	else fprintf(stderr, "bufterminator: not printed: bad deref\n");
-	fprintf(stderr, "expected bufterminator:\t0x%lx\n", (ulong)(bufferkey ^ (ulong)str));
+	fprintf(stderr, "expected bufterminator:\t0x%lx\n", (uintptr_t)(bufferkey ^ (uintptr_t)str));
 	fprintf(stderr,  "--------\n"); }
 	
 	

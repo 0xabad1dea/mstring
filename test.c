@@ -108,6 +108,14 @@ int main() {
 	mstringDebug(&M);
 	mstringHexdump(&M);
 	
+	printf("Awkward size:\n");
+	mstringDelete(&M);
+	mstringNew(&M, 17);
+	mstringSet(&M, "abcdefghijklmnop", 0);
+	mstringDebug(&M);
+	mstringHexdump(&M);
+	
+	
 	
 	
 	}

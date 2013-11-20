@@ -57,8 +57,8 @@ int mstringValid(const mstring* str) {
 	// the last clause can segfault if buf points to lala land,
 	// but short circuit evaluation will usually prevent this.
 	// there isn't really anything I can do about this.
-	if((str->canarybuf ^ (ulong)str->buf) == bufferkey
-	&& (str->canarylen ^ (ulong)str->len) == lengthkey
+	if((str->canarybuf ^ (uintptr_t)str->buf) == bufferkey
+	&& (str->canarylen ^ (uintptr_t)str->len) == lengthkey
 	&& (*bufterminator == (bufferkey ^ (uintptr_t)str))) return 1;
 	
 	return 0; }
@@ -81,13 +81,13 @@ void mstringNew(mstring* str, size_t len) {
 	
 	str->len = len;
 	// (extra space for extra null terminator + buffer terminator)
-	str->buf = malloc(len+2+(8<<1)); // I know, I have bare literals!
+	str->buf = (char*)malloc(len+2+(8<<1)); // I know, I have bare literals!
 	if(!str->buf) mstringFatal(str, "malloc failed in mstringNew()");
 	str->buf[len] = 0; // personal preference to make sure any buf
 	// can always be read out as a c string
 	
-	str->canarybuf = bufferkey ^ (ulong)str->buf;
-	str->canarylen = lengthkey ^ (ulong)str->len;
+	str->canarybuf = bufferkey ^ (uintptr_t)str->buf;
+	str->canarylen = lengthkey ^ (uintptr_t)str->len;
 	
 	ulong* bufterminator;
 	bufterminator = (ulong*)(((uintptr_t)str->buf + len + 1 + 8)&~7);
@@ -194,7 +194,7 @@ void mstringGrow(mstring* str, size_t newlen){
 	if(newlen == str->len) return; // nothing to see here
 	if(newlen < str->len) mstringFatal(str, "trying to shrink in mstringGrow()");
 	tmplen = str->len;
-	tmp = malloc(tmplen);
+	tmp = (char*)malloc(tmplen);
 	if(!tmp) mstringFatal(str, "malloc failure in mstringGrow()");
 	memcpy(tmp,str->buf,tmplen);
 	mstringDelete(str);
@@ -215,7 +215,7 @@ void mstringDebug(const mstring* str) {
 	fprintf(stderr, "--------\n");
 	fprintf(stderr, "address:\t%p\n", &str);
 	fprintf(stderr, "canarybuf:\t0x%lx / 0x%lx\n", str->canarybuf, 
-	(ulong)str->canarybuf ^ (ulong)str->buf);
+	(uintptr_t)str->canarybuf ^ (uintptr_t)str->buf);
 	fprintf(stderr, "buf:\t\t%p\n", str->buf);
 	fprintf(stderr, "len:\t\t%lu\n",(ulong)str->len);
 	fprintf(stderr, "canarylen:\t0x%lx / 0x%lx\n", str->canarylen, 
@@ -228,8 +228,8 @@ void mstringDebug(const mstring* str) {
 	
 /* hex prints the buffer including terminator etc. */
 void mstringHexdump(const mstring* str) {
-	int total = str->len+2+(8<<1);
-	int i;
+	size_t total = str->len+2+(8<<1);
+	uint i;
 	for(i = 0; i < total; i++) {
 		// forget to specify two significant digits for a good time
 		printf("%.2hhx ", str->buf[i]); 

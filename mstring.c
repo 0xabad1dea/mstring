@@ -14,6 +14,8 @@
 	You may use read-only standard functions such as strlen() on
 	mstring.buf and mstring.len directly after they are initialized, but
 	my goal is to wrap all of the good ones :)
+	
+	Haters { gonna hate } my compact brace style
 
 	--TODO--
 	mstringCompareSecure (constant time)

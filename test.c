@@ -116,6 +116,6 @@ int main() {
 	mstringHexdump(&M);
 	
 	
-	
+	return 0;
 	
 	}

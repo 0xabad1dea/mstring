@@ -48,18 +48,18 @@ ulong lengthkey = 0xbad1dea5;
 int mstringValid(const mstring* str) {
 	if(str == NULL || str->buf == NULL) return 0;
 	
-	uintptr_t* bufterminator;
+	ulong* bufterminator;
 	// my court wizards tell me this will maintain correct alignment
 	// this formula has caused me a lot of grief - should be completely
 	// 32/64 bit safe now, I think?!
-	bufterminator = (uintptr_t*)(((uintptr_t)str->buf + str->len + 1 + 8)&~7);
+	bufterminator = (ulong*)(((uintptr_t)str->buf + str->len + 1 + 8)&~7);
 	
 	// the last clause can segfault if buf points to lala land,
 	// but short circuit evaluation will usually prevent this.
 	// there isn't really anything I can do about this.
 	if((str->canarybuf ^ (ulong)str->buf) == bufferkey
 	&& (str->canarylen ^ (ulong)str->len) == lengthkey
-	&& (*bufterminator == ((uintptr_t)bufferkey ^ (uintptr_t)str))) return 1;
+	&& (*bufterminator == (bufferkey ^ (uintptr_t)str))) return 1;
 	
 	return 0; }
 
@@ -72,7 +72,7 @@ void mstringNew(mstring* str, size_t len) {
 	
 	// this should be alignment safe now.
 	if((len + 2 + (8<<1))  < len) 
-		mstringFatal(NULL, "length wraparound in mstringNew()");
+		mstringFatal(str, "length wraparound in mstringNew()");
 	
 	// reused valid mstring - clean it up for you
 	if(mstringValid(str)) {
@@ -89,8 +89,8 @@ void mstringNew(mstring* str, size_t len) {
 	str->canarybuf = bufferkey ^ (ulong)str->buf;
 	str->canarylen = lengthkey ^ (ulong)str->len;
 	
-	uintptr_t* bufterminator;
-	bufterminator = (uintptr_t*)(((uintptr_t)str->buf + len + 1 + 8)&~7);
+	ulong* bufterminator;
+	bufterminator = (ulong*)(((uintptr_t)str->buf + len + 1 + 8)&~7);
 	*bufterminator = bufferkey ^ (uintptr_t)str;
 	
 	return; }
@@ -210,8 +210,8 @@ void mstringGrow(mstring* str, size_t newlen){
 /* prettyprint the structure */
 void mstringDebug(const mstring* str) {
 	if(!str) { fprintf(stderr, "--------\nNULL!!!!\n--------\n"); return; }
-	uintptr_t* bufterminator;
-	bufterminator = (uintptr_t*)(((uintptr_t)str->buf + str->len + 1 + 8)&~7);
+	ulong* bufterminator;
+	bufterminator = (ulong*)(((uintptr_t)str->buf + str->len + 1 + 8)&~7);
 	fprintf(stderr, "--------\n");
 	fprintf(stderr, "address:\t%p\n", &str);
 	fprintf(stderr, "canarybuf:\t0x%lx / 0x%lx\n", str->canarybuf, 
@@ -220,9 +220,9 @@ void mstringDebug(const mstring* str) {
 	fprintf(stderr, "len:\t\t%lu\n",(ulong)str->len);
 	fprintf(stderr, "canarylen:\t0x%lx / 0x%lx\n", str->canarylen, 
 	(ulong)str->canarylen ^ (ulong)str->len);
-	if(mstringValid(str)) fprintf(stderr, "bufterminator:\t\t0x%lx\n", (uintptr_t)*bufterminator);
+	if(mstringValid(str)) fprintf(stderr, "bufterminator:\t\t0x%lx\n", (ulong)*bufterminator);
 	else fprintf(stderr, "bufterminator: not printed: bad deref\n");
-	fprintf(stderr, "expected bufterminator:\t0x%lx\n", (uintptr_t)(bufferkey ^ (uintptr_t)str));
+	fprintf(stderr, "expected bufterminator:\t0x%lx\n", (ulong)(bufferkey ^ (uintptr_t)str));
 	fprintf(stderr,  "--------\n"); }
 	
 	

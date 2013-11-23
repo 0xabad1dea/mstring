@@ -6,6 +6,7 @@
 
 */
 
+#include <stdlib.h>
 
 typedef struct {
 	unsigned long canarybuf;

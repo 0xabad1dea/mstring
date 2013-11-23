@@ -29,12 +29,12 @@
 	
 */
 
+#include "mstring.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>
-#include "mstring.h"
 
 #define ulong unsigned long
 #define uint unsigned int
